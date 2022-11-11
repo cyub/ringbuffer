@@ -13,6 +13,7 @@ type spscRingBuffer struct {
 
 var _ RingBuffer = (*spscRingBuffer)(nil)
 
+// NewSpscRingBuffer return the spsc ring buffer with specified capacity
 func NewSpscRingBuffer(capacity int) *spscRingBuffer {
 	return &spscRingBuffer{
 		head:     0,
@@ -22,6 +23,8 @@ func NewSpscRingBuffer(capacity int) *spscRingBuffer {
 	}
 }
 
+// Enqueue element to the ring buffer
+// if the ring buffer is full, then return ErrIsFull
 func (q *spscRingBuffer) Enqueue(val interface{}) error {
 	h := atomic.LoadUint64(&q.head)
 	t := q.tail
@@ -34,6 +37,8 @@ func (q *spscRingBuffer) Enqueue(val interface{}) error {
 	return nil
 }
 
+// Dequeue an element from the ring buffer
+// if the ring buffer is empty, then return ErrIsEmpty
 func (q *spscRingBuffer) Dequeue() (interface{}, error) {
 	h := q.head
 	t := atomic.LoadUint64(&q.tail)
@@ -46,10 +51,12 @@ func (q *spscRingBuffer) Dequeue() (interface{}, error) {
 	return val, nil
 }
 
+// Length return the number of all elements
 func (q *spscRingBuffer) Length() int {
 	return int(atomic.LoadUint64(&q.tail) - atomic.LoadUint64(&q.head))
 }
 
+// Capacity return the capacity of ring buffer
 func (q *spscRingBuffer) Capacity() int {
 	return q.capacity
 }
