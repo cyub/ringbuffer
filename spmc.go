@@ -5,7 +5,6 @@
 package ringbuffer
 
 import (
-	"errors"
 	"sync/atomic"
 	"unsafe"
 )
@@ -45,7 +44,7 @@ func (q *SpmcRingBuffer) Enqueue(elem interface{}) error {
 
 	slot := (*eface)(unsafe.Pointer(&q.elements[t%uint64(q.capacity)]))
 	if atomic.LoadPointer(&slot.typ) != nil {
-		return errors.New("consumer is processing at current slot")
+		return ErrSlotIsReading
 	}
 
 	*(*interface{})(unsafe.Pointer(slot)) = elem

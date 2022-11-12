@@ -5,7 +5,6 @@
 package ringbuffer
 
 import (
-	"errors"
 	"sync/atomic"
 	"unsafe"
 )
@@ -47,7 +46,7 @@ func (q *MpmcRingBuffer) Enqueue(elem interface{}) error {
 
 		slot := (*eface)(unsafe.Pointer(&q.elements[t%uint64(q.capacity)]))
 		if atomic.LoadPointer(&slot.typ) != nil {
-			return errors.New("consumer is processing at current slot")
+			return ErrSlotIsReading
 		}
 		if !atomic.CompareAndSwapUint64(&q.tail, t, t+1) {
 			continue
@@ -73,7 +72,7 @@ func (q *MpmcRingBuffer) Dequeue() (interface{}, error) {
 
 		slot := (*eface)(unsafe.Pointer(&q.elements[h%uint64(q.capacity)]))
 		if atomic.LoadPointer(&slot.val) == nil {
-			return nil, errors.New("producer is processing at current slot")
+			return nil, ErrSlotIsWriting
 		}
 		if atomic.CompareAndSwapUint64(&q.head, h, h+1) {
 			elem := *(*interface{})(unsafe.Pointer(slot))

@@ -5,7 +5,6 @@
 package ringbuffer
 
 import (
-	"errors"
 	"sync/atomic"
 	"unsafe"
 )
@@ -68,7 +67,7 @@ func (q *MpscRingBuffer) Dequeue() (interface{}, error) {
 
 	slot := (*eface)(unsafe.Pointer(&q.elements[h%uint64(q.capacity)]))
 	if atomic.LoadPointer(&slot.val) == nil {
-		return nil, errors.New("producer is processing at current slot")
+		return nil, ErrSlotIsWriting
 	}
 	elem := *(*interface{})(unsafe.Pointer(slot))
 	atomic.AddUint64(&q.head, 1)
