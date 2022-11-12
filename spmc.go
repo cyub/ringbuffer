@@ -10,18 +10,19 @@ import (
 	"unsafe"
 )
 
-type spmcRingBuffer struct {
+// SpmcRingBuffer define Single Producer/Multi-Consumer ring buffer
+type SpmcRingBuffer struct {
 	head     uint64
 	tail     uint64
 	capacity int
 	elements []interface{}
 }
 
-var _ RingBuffer = (*spmcRingBuffer)(nil)
+var _ RingBuffer = (*SpmcRingBuffer)(nil)
 
 // NewSpmcRingBuffer return the spmc ring buffer with specified capacity
-func NewSpmcRingBuffer(capacity int) *spmcRingBuffer {
-	return &spmcRingBuffer{
+func NewSpmcRingBuffer(capacity int) *SpmcRingBuffer {
+	return &SpmcRingBuffer{
 		head:     0,
 		tail:     0,
 		capacity: capacity,
@@ -32,7 +33,7 @@ func NewSpmcRingBuffer(capacity int) *spmcRingBuffer {
 // Enqueue element to the ring buffer
 // if the ring buffer is full, then return ErrIsFull. if the enqueue elem is nil, return ErrElementIsNil
 // When equeue element to the ring buffer, it may happen that the consumer who are consuming the same slot, so an error is returned
-func (q *spmcRingBuffer) Enqueue(elem interface{}) error {
+func (q *SpmcRingBuffer) Enqueue(elem interface{}) error {
 	if elem == nil {
 		return ErrElementIsNil
 	}
@@ -54,7 +55,7 @@ func (q *spmcRingBuffer) Enqueue(elem interface{}) error {
 
 // Dequeue an element from the ring buffer
 // if the ring buffer is empty, then return ErrIsEmpty
-func (q *spmcRingBuffer) Dequeue() (interface{}, error) {
+func (q *SpmcRingBuffer) Dequeue() (interface{}, error) {
 	for {
 		h := atomic.LoadUint64(&q.head)
 		t := atomic.LoadUint64(&q.tail)
@@ -72,11 +73,11 @@ func (q *spmcRingBuffer) Dequeue() (interface{}, error) {
 }
 
 // Length return the number of all elements
-func (q *spmcRingBuffer) Length() int {
+func (q *SpmcRingBuffer) Length() int {
 	return int(atomic.LoadUint64(&q.tail) - atomic.LoadUint64(&q.head))
 }
 
 // Capacity return the capacity of ring buffer
-func (q *spmcRingBuffer) Capacity() int {
+func (q *SpmcRingBuffer) Capacity() int {
 	return q.capacity
 }
