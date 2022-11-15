@@ -30,10 +30,9 @@ func NewSpscRingBuffer(capacity int) *SpscRingBuffer {
 
 // Enqueue element to the ring buffer
 // if the ring buffer is full, then return ErrIsFull
-// if the enqueue elem is nil, return ErrElementIsNil
 func (q *SpscRingBuffer) Enqueue(elem interface{}) error {
 	if elem == nil {
-		return ErrElementIsNil
+		elem = nilPlaceholder
 	}
 	h := atomic.LoadUint64(&q.head)
 	t := q.tail
@@ -57,6 +56,9 @@ func (q *SpscRingBuffer) Dequeue() (interface{}, error) {
 
 	elem := q.elements[h%uint64(q.capacity)]
 	atomic.AddUint64(&q.head, 1)
+	if elem == nilPlaceholder {
+		return nil, nil
+	}
 	return elem, nil
 }
 

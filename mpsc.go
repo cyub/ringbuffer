@@ -30,10 +30,10 @@ func NewMpscRingBuffer(capacity int) *MpscRingBuffer {
 }
 
 // Enqueue element to the ring buffer
-// if the ring buffer is full, then return ErrIsFull. if the enqueue elem is nil, return ErrElementIsNil
+// if the ring buffer is full, then return ErrIsFull.
 func (q *MpscRingBuffer) Enqueue(elem interface{}) error {
 	if elem == nil {
-		return ErrElementIsNil
+		elem = nilPlaceholder
 	}
 
 	for {
@@ -71,6 +71,9 @@ func (q *MpscRingBuffer) Dequeue() (interface{}, error) {
 	}
 	elem := *(*interface{})(unsafe.Pointer(slot))
 	atomic.AddUint64(&q.head, 1)
+	if elem == nilPlaceholder {
+		return nil, nil
+	}
 	return elem, nil
 }
 

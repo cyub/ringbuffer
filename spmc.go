@@ -30,11 +30,11 @@ func NewSpmcRingBuffer(capacity int) *SpmcRingBuffer {
 }
 
 // Enqueue element to the ring buffer
-// if the ring buffer is full, then return ErrIsFull. if the enqueue elem is nil, return ErrElementIsNil
+// if the ring buffer is full, then return ErrIsFull.
 // When equeue element to the ring buffer, it may happen that the consumer who are consuming the same slot, so an error is returned
 func (q *SpmcRingBuffer) Enqueue(elem interface{}) error {
 	if elem == nil {
-		return ErrElementIsNil
+		elem = nilPlaceholder
 	}
 	h := atomic.LoadUint64(&q.head)
 	t := q.tail
@@ -66,6 +66,9 @@ func (q *SpmcRingBuffer) Dequeue() (interface{}, error) {
 			elem := *(*interface{})(unsafe.Pointer(slot))
 			slot.val = nil
 			atomic.StorePointer(&slot.typ, nil)
+			if elem == nilPlaceholder {
+				return nil, nil
+			}
 			return elem, nil
 		}
 	}

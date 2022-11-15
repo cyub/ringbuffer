@@ -21,3 +21,7 @@ type eface struct {
 	typ unsafe.Pointer
 	val unsafe.Pointer
 }
+
+type placeholder struct{}
+
+var nilPlaceholder interface{} = placeholder{}
