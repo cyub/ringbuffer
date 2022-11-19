@@ -39,7 +39,9 @@ func (q *MpscRingBuffer) Enqueue(elem interface{}) error {
 	for {
 		h := atomic.LoadUint64(&q.head)
 		t := atomic.LoadUint64(&q.tail)
-		if t == h+uint64(q.capacity) {
+		// for a queue that is already full, when atomic loaded q.head, other thread processes happen to be dequeued and enqueued sequentially,
+		// then maybe t is greater than h + q.capacity
+		if t >= h+uint64(q.capacity) {
 			return ErrIsFull
 		}
 
@@ -71,6 +73,7 @@ retry:
 		goto retry
 	}
 	elem := *(*interface{})(unsafe.Pointer(slot))
+	slot.val, slot.typ = nil, nil
 	atomic.AddUint64(&q.head, 1)
 	if elem == nilPlaceholder {
 		return nil, nil

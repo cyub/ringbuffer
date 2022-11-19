@@ -36,7 +36,7 @@ func (q *SpscRingBuffer) Enqueue(elem interface{}) error {
 	}
 	h := atomic.LoadUint64(&q.head)
 	t := q.tail
-	if t == (h + uint64(q.capacity)) {
+	if t >= h+uint64(q.capacity) {
 		return ErrIsFull
 	}
 

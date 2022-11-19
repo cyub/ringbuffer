@@ -40,7 +40,7 @@ func (q *MpmcRingBuffer) Enqueue(elem interface{}) error {
 	for {
 		h := atomic.LoadUint64(&q.head)
 		t := atomic.LoadUint64(&q.tail)
-		if t == h+uint64(q.capacity) {
+		if t >= h+uint64(q.capacity) {
 			return ErrIsFull
 		}
 
