@@ -5,6 +5,7 @@
 package ringbuffer
 
 import (
+	"os"
 	"runtime"
 	"sync"
 	"testing"
@@ -50,89 +51,116 @@ func mknumslice(n int) []int {
 	return s
 }
 
-func benchmarkMPMC(b *testing.B, ring RingBuffer, workers int, done bool) {
+func doneEnv() bool {
+	switch os.Getenv("DONE") {
+	case "", "true":
+		return true
+	case "false":
+		return false
+	default:
+		return true
+	}
+}
+
+func benchmarkRingBuffer(b *testing.B, ring RingBuffer, workers int, multiProducer, multiConsumer bool, done bool) {
 	var size = b.N/workers + 1
 	var numbers = mknumslice(size)
 	var wg sync.WaitGroup
 
 	wg.Add(workers * 2)
 	b.ResetTimer()
-	for p := 0; p < workers; p++ {
-		go func(p int) {
-			for i := range numbers {
-			try:
-				err := ring.Enqueue(i)
-				if err != nil {
-					if done {
-						runtime.Gosched()
-						goto try
+
+	if multiProducer {
+		for p := 0; p < workers; p++ {
+			go func() {
+				for i := range numbers {
+				retry:
+					if err := ring.Enqueue(i); err != nil {
+						if done { // all must done
+							runtime.Gosched()
+							goto retry
+						}
 					}
 				}
+				wg.Done()
+			}()
+		}
+	} else {
+		go func() {
+			for p := 0; p < workers; p++ {
+				for i := range numbers {
+				retry:
+					if err := ring.Enqueue(i); err != nil {
+						if done {
+							runtime.Gosched()
+							goto retry
+						}
+					}
+				}
+				wg.Done()
 			}
-			wg.Done()
-		}(p)
+		}()
+
 	}
 
-	for p := 0; p < workers; p++ {
-		go func(c int) {
-			for i := 0; i < size; i++ {
-			try:
-				_, err := ring.Dequeue()
-				if err != nil {
-					if done {
-						runtime.Gosched()
-						goto try
+	if multiConsumer {
+		for p := 0; p < workers; p++ {
+			go func() {
+				for i := 0; i < size; i++ {
+				retry:
+					if _, err := ring.Dequeue(); err != nil {
+						if done {
+							runtime.Gosched()
+							goto retry
+						}
+
 					}
 				}
-
+				wg.Done()
+			}()
+		}
+	} else {
+		go func() {
+			for p := 0; p < workers; p++ {
+				for i := 0; i < size; i++ {
+				retry:
+					if _, err := ring.Dequeue(); err != nil {
+						if done {
+							runtime.Gosched()
+							goto retry
+						}
+					}
+				}
+				wg.Done()
 			}
-			wg.Done()
-		}(p)
+		}()
 	}
 	wg.Wait()
 }
 
 func BenchmarkRingMPMC(b *testing.B) {
 	b.Run("100P100C", func(b *testing.B) {
-		benchmarkMPMC(b, NewMpmcRingBuffer(8192), 100, false)
+		benchmarkRingBuffer(b, NewMpmcRingBuffer(8192), 100, true, true, doneEnv())
 	})
 	b.Run("4P4C_1CPU", func(b *testing.B) {
 		pp := runtime.GOMAXPROCS(1)
-		benchmarkMPMC(b, NewMpmcRingBuffer(8192), 4, false)
-		runtime.GOMAXPROCS(pp)
-	})
-
-	b.Run("100P100C_DONE", func(b *testing.B) {
-		benchmarkMPMC(b, NewMpmcRingBuffer(8192), 100, true)
-	})
-	b.Run("4P4C_1CPU_DONE", func(b *testing.B) {
-		pp := runtime.GOMAXPROCS(1)
-		benchmarkMPMC(b, NewMpmcRingBuffer(8192), 4, true)
+		benchmarkRingBuffer(b, NewMpmcRingBuffer(8192), 4, true, true, doneEnv())
 		runtime.GOMAXPROCS(pp)
 	})
 }
 
 func BenchmarkChanMPMC(b *testing.B) {
 	b.Run("100P100C", func(b *testing.B) {
-		benchmarkMPMC(b, newChanRingBuffer(8192), 100, false)
+		benchmarkRingBuffer(b, newChanRingBuffer(8192), 100, true, true, doneEnv())
 	})
 	b.Run("4P4C_1CPU", func(b *testing.B) {
 		pp := runtime.GOMAXPROCS(1)
-		benchmarkMPMC(b, newChanRingBuffer(8192), 4, false)
-		runtime.GOMAXPROCS(pp)
-	})
-
-	b.Run("100P100C_DONE", func(b *testing.B) {
-		benchmarkMPMC(b, newChanRingBuffer(8192), 100, true)
-	})
-	b.Run("4P4C_1CPU_DONE", func(b *testing.B) {
-		pp := runtime.GOMAXPROCS(1)
-		benchmarkMPMC(b, newChanRingBuffer(8192), 4, true)
+		benchmarkRingBuffer(b, newChanRingBuffer(8192), 4, true, true, doneEnv())
 		runtime.GOMAXPROCS(pp)
 	})
 }
 
-// ringbuffer base channel
+// ringbuffer base channel as compare object
 type chanRingBuffer chan interface{}
 
 func newChanRingBuffer(capacity int) chanRingBuffer {

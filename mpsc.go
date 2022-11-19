@@ -59,6 +59,7 @@ func (q *MpscRingBuffer) Enqueue(elem interface{}) error {
 // if the ring buffer is empty, then return ErrIsEmpty
 // When dequeue element to the ring buffer, it may happen that the producer who are working the same slot, so an error is returned
 func (q *MpscRingBuffer) Dequeue() (interface{}, error) {
+retry:
 	h := q.head
 	t := atomic.LoadUint64(&q.tail)
 	if t == h {
@@ -67,7 +68,7 @@ func (q *MpscRingBuffer) Dequeue() (interface{}, error) {
 
 	slot := (*eface)(unsafe.Pointer(&q.elements[h%uint64(q.capacity)]))
 	if atomic.LoadPointer(&slot.val) == nil {
-		return nil, ErrSlotIsWriting
+		goto retry
 	}
 	elem := *(*interface{})(unsafe.Pointer(slot))
 	atomic.AddUint64(&q.head, 1)

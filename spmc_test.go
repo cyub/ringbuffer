@@ -5,6 +5,7 @@
 package ringbuffer
 
 import (
+	"runtime"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -38,4 +39,26 @@ func TestSPMCRingBuffer(t *testing.T) {
 	}
 	assert.Equal(t, spsc.Length(), 0)
 	assert.Equal(t, spsc.Capacity(), cap)
+}
+
+func BenchmarkRingSPMC(b *testing.B) {
+	b.Run("1P100C", func(b *testing.B) {
+		benchmarkRingBuffer(b, NewSpmcRingBuffer(8192), 100, false, true, doneEnv())
+	})
+	b.Run("1P4C_1CPU", func(b *testing.B) {
+		pp := runtime.GOMAXPROCS(1)
+		benchmarkRingBuffer(b, NewSpmcRingBuffer(8192), 4, false, true, doneEnv())
+		runtime.GOMAXPROCS(pp)
+	})
+}
+
+func BenchmarkChanSPMC(b *testing.B) {
+	b.Run("1P100C", func(b *testing.B) {
+		benchmarkRingBuffer(b, newChanRingBuffer(8192), 100, false, true, doneEnv())
+	})
+	b.Run("1P4C_1CPU", func(b *testing.B) {
+		pp := runtime.GOMAXPROCS(1)
+		benchmarkRingBuffer(b, newChanRingBuffer(8192), 4, false, true, doneEnv())
+		runtime.GOMAXPROCS(pp)
+	})
 }

@@ -36,6 +36,7 @@ func (q *SpmcRingBuffer) Enqueue(elem interface{}) error {
 	if elem == nil {
 		elem = nilPlaceholder
 	}
+retry:
 	h := atomic.LoadUint64(&q.head)
 	t := q.tail
 	if t == (h + uint64(q.capacity)) {
@@ -44,7 +45,7 @@ func (q *SpmcRingBuffer) Enqueue(elem interface{}) error {
 
 	slot := (*eface)(unsafe.Pointer(&q.elements[t%uint64(q.capacity)]))
 	if atomic.LoadPointer(&slot.typ) != nil {
-		return ErrSlotIsReading
+		goto retry
 	}
 
 	*(*interface{})(unsafe.Pointer(slot)) = elem
