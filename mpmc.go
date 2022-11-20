@@ -5,6 +5,7 @@
 package ringbuffer
 
 import (
+	"runtime"
 	"sync/atomic"
 	"unsafe"
 )
@@ -46,9 +47,11 @@ func (q *MpmcRingBuffer) Enqueue(elem interface{}) error {
 
 		slot := (*eface)(unsafe.Pointer(&q.elements[t%uint64(q.capacity)]))
 		if atomic.LoadPointer(&slot.typ) != nil {
+			runtime.Gosched()
 			continue
 		}
 		if !atomic.CompareAndSwapUint64(&q.tail, t, t+1) {
+			runtime.Gosched()
 			continue
 		}
 
@@ -72,17 +75,20 @@ func (q *MpmcRingBuffer) Dequeue() (interface{}, error) {
 
 		slot := (*eface)(unsafe.Pointer(&q.elements[h%uint64(q.capacity)]))
 		if atomic.LoadPointer(&slot.val) == nil {
+			runtime.Gosched()
 			continue
 		}
-		if atomic.CompareAndSwapUint64(&q.head, h, h+1) {
-			elem := *(*interface{})(unsafe.Pointer(slot))
-			atomic.StorePointer(&slot.val, nil)
-			atomic.StorePointer(&slot.typ, nil)
-			if elem == nilPlaceholder {
-				return nil, nil
-			}
-			return elem, nil
+		if !atomic.CompareAndSwapUint64(&q.head, h, h+1) {
+			runtime.Gosched()
+			continue
 		}
+		elem := *(*interface{})(unsafe.Pointer(slot))
+		atomic.StorePointer(&slot.val, nil)
+		atomic.StorePointer(&slot.typ, nil)
+		if elem == nilPlaceholder {
+			return nil, nil
+		}
+		return elem, nil
 	}
 }
 

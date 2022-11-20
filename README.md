@@ -32,12 +32,12 @@ go test  -benchmem -run=^$ -bench="^BenchmarkRingMPMC|BenchmarkChanMPMC$" . gith
 goos: darwin
 goarch: arm64
 pkg: github.com/cyub/ringbuffer
-BenchmarkRingMPMC/100P100C-8         	 2634507	       423.5 ns/op	       7 B/op	       0 allocs/op
-BenchmarkRingMPMC/4P4C_1CPU-8        	40298432	        27.80 ns/op	       8 B/op	       1 allocs/op
-BenchmarkChanMPMC/100P100C-8         	10558228	       104.3 ns/op	       7 B/op	       0 allocs/op
-BenchmarkChanMPMC/4P4C_1CPU-8        	31277354	        35.78 ns/op	       8 B/op	       1 allocs/op
+BenchmarkRingMPMC/100P100C-8         	 9562984	       126.6 ns/op	       7 B/op	       0 allocs/op
+BenchmarkRingMPMC/4P4C_1CPU-8        	40235656	        27.85 ns/op	       8 B/op	       1 allocs/op
+BenchmarkChanMPMC/100P100C-8         	10317433	       108.6 ns/op	       7 B/op	       0 allocs/op
+BenchmarkChanMPMC/4P4C_1CPU-8        	31602544	        35.97 ns/op	       8 B/op	       1 allocs/op
 PASS
-ok  	github.com/cyub/ringbuffer	5.557s
+ok  	github.com/cyub/ringbuffer	7.001s
 ```
 
 ### MPSC ringbuffer vs channel
@@ -50,12 +50,12 @@ go test  -benchmem -run=^$ -bench="^BenchmarkRingMPSC|BenchmarkChanMPSC$" . gith
 goos: darwin
 goarch: arm64
 pkg: github.com/cyub/ringbuffer
-BenchmarkRingMPSC/100P1C-8         	 3915708	       296.5 ns/op	       8 B/op	       1 allocs/op
-BenchmarkRingMPSC/4P1C_1CPU-8      	40444438	        27.86 ns/op	       8 B/op	       1 allocs/op
-BenchmarkChanMPSC/100P1C-8         	11623476	       124.5 ns/op	       8 B/op	       1 allocs/op
-BenchmarkChanMPSC/4P1C_1CPU-8      	31618956	        35.88 ns/op	       8 B/op	       1 allocs/op
+BenchmarkRingMPSC/100P1C-8         	10631840	       111.9 ns/op	       7 B/op	       0 allocs/op
+BenchmarkRingMPSC/4P1C_1CPU-8      	40517098	        27.78 ns/op	       8 B/op	       1 allocs/op
+BenchmarkChanMPSC/100P1C-8         	11523838	       103.5 ns/op	       8 B/op	       1 allocs/op
+BenchmarkChanMPSC/4P1C_1CPU-8      	31493272	        35.93 ns/op	       8 B/op	       1 allocs/op
 PASS
-ok  	github.com/cyub/ringbuffer	5.544s
+ok  	github.com/cyub/ringbuffer	5.060s
 ```
 
 ### SPMC ringbuffer vs channel
@@ -68,12 +68,12 @@ go test  -benchmem -run=^$ -bench="^BenchmarkRingSPMC|BenchmarkChanSPMC$" . gith
 goos: darwin
 goarch: arm64
 pkg: github.com/cyub/ringbuffer
-BenchmarkRingSPMC/1P100C-8         	 4392514	       285.5 ns/op	       7 B/op	       0 allocs/op
-BenchmarkRingSPMC/1P4C_1CPU-8      	54208296	        20.46 ns/op	       8 B/op	       1 allocs/op
-BenchmarkChanSPMC/1P100C-8         	 5216336	       394.5 ns/op	       7 B/op	       0 allocs/op
-BenchmarkChanSPMC/1P4C_1CPU-8      	31566313	        35.75 ns/op	       8 B/op	       1 allocs/op
+BenchmarkRingSPMC/1P100C-8         	11944942	        99.32 ns/op	       7 B/op	       0 allocs/op
+BenchmarkRingSPMC/1P4C_1CPU-8      	53785629	        20.31 ns/op	       8 B/op	       1 allocs/op
+BenchmarkChanSPMC/1P100C-8         	 5077400	       405.6 ns/op	       7 B/op	       0 allocs/op
+BenchmarkChanSPMC/1P4C_1CPU-8      	31406179	        35.81 ns/op	       8 B/op	       1 allocs/op
 PASS
-ok  	github.com/cyub/ringbuffer	6.256s
+ok  	github.com/cyub/ringbuffer	5.993s
 ```
 
 ### SPSC ringbuffer vs channel
