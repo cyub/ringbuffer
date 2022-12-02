@@ -5,6 +5,7 @@
 package ringbuffer
 
 import (
+	"sync/atomic"
 	"unsafe"
 )
 
@@ -25,3 +26,21 @@ type eface struct {
 type placeholder struct{}
 
 var nilPlaceholder interface{} = placeholder{}
+
+// ringbuffer struct
+type ringbuffer struct {
+	head     uint64
+	tail     uint64
+	capacity int
+	elements []interface{}
+}
+
+// Length return the number of all elements
+func (q *ringbuffer) Length() int {
+	return int(atomic.LoadUint64(&q.tail) - atomic.LoadUint64(&q.head))
+}
+
+// Capacity return the capacity of ring buffer
+func (q *ringbuffer) Capacity() int {
+	return q.capacity
+}

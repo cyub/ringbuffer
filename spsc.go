@@ -10,10 +10,7 @@ import (
 
 // SpscRingBuffer define Single Producer/Single Consumer ring buffer
 type SpscRingBuffer struct {
-	head     uint64
-	tail     uint64
-	capacity int
-	elements []interface{}
+	ringbuffer
 }
 
 var _ RingBuffer = (*SpscRingBuffer)(nil)
@@ -21,10 +18,12 @@ var _ RingBuffer = (*SpscRingBuffer)(nil)
 // NewSpscRingBuffer return the spsc ring buffer with specified capacity
 func NewSpscRingBuffer(capacity int) *SpscRingBuffer {
 	return &SpscRingBuffer{
-		head:     0,
-		tail:     0,
-		capacity: capacity,
-		elements: make([]interface{}, capacity),
+		ringbuffer{
+			head:     0,
+			tail:     0,
+			capacity: capacity,
+			elements: make([]interface{}, capacity),
+		},
 	}
 }
 
@@ -60,14 +59,4 @@ func (q *SpscRingBuffer) Dequeue() (interface{}, error) {
 		return nil, nil
 	}
 	return elem, nil
-}
-
-// Length return the number of all elements
-func (q *SpscRingBuffer) Length() int {
-	return int(atomic.LoadUint64(&q.tail) - atomic.LoadUint64(&q.head))
-}
-
-// Capacity return the capacity of ring buffer
-func (q *SpscRingBuffer) Capacity() int {
-	return q.capacity
 }
