@@ -27,10 +27,16 @@ type placeholder struct{}
 
 var nilPlaceholder interface{} = placeholder{}
 
+type cacheLinePad struct {
+	_ [128 - unsafe.Sizeof(uint64(0))%128]byte
+}
+
 // ringbuffer struct
 type ringbuffer struct {
 	head     uint64
+	_        cacheLinePad
 	tail     uint64
+	_        cacheLinePad
 	capacity int
 	elements []interface{}
 }
